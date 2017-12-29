@@ -4,6 +4,9 @@
 /deps
 /*.ez
 
+# ENV secrets
+.env
+
 # Generated on crash by the VM
 erl_crash.dump
 
