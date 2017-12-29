@@ -5,6 +5,7 @@ defmodule Discuss.User do
     field :email, :string
     field :provider, :string
     field :token, :string
+    has_many :topics, Discuss.Topic
 
     timestamps()
   end
@@ -12,6 +13,6 @@ defmodule Discuss.User do
   def changeset(struct, params \\ %{}) do
     struct
     |> cast(params, [:email, :token, :provider])
-    |> validate_required([:email, :token, :provider]) 
+    |> validate_required([:email, :token, :provider])
   end
 end
