@@ -4,6 +4,7 @@ defmodule Discuss.TopicController do
   alias Discuss.Topic
 
   plug Discuss.Plugs.RequireAuth when not action in [:index, :show]
+  plug :check_topic_owner when action in [:update, :edit, :delete]
 
   def index(conn, _params) do
     topics = Repo.all(Topic)
@@ -17,7 +18,9 @@ defmodule Discuss.TopicController do
   end
 
   def create(conn, %{"topic" => topic}) do
-    changeset = Topic.changeset(%Topic{}, topic)
+    changeset = conn.assigns.user
+    |> build_assoc(:topics)
+    |> Topic.changeset(topic)
 
     case Repo.insert(changeset) do
       {:ok, _topic} ->
@@ -25,7 +28,7 @@ defmodule Discuss.TopicController do
         |> put_flash(:info, "Topic Created")
         |> redirect(to: topic_path(conn, :index))
       {:error, changeset} ->
-        render conn, "new.html", changeset: changeset
+          render conn, "new.html", changeset: changeset
     end
   end
 
@@ -57,4 +60,24 @@ defmodule Discuss.TopicController do
     |> put_flash(:info, "Topic Deleted")
     |> redirect(to: topic_path(conn, :index))
   end
-end
+
+  def check_topic_owner(conn, _params) do
+    %{params: %{"id" => topic_id}} = conn
+    if topic = Repo.get(Topic, topic_id) do
+      if topic.user_id == conn.assigns.user.id do
+        conn
+      else
+        conn
+        |> put_flash(:error, "You cannot edit that")
+        |> redirect(to: topic_path(conn, :index))
+        |> halt()
+      end
+    else
+      conn
+      |> put_flash(:error, "You cannot edit that")
+      |> redirect(to: topic_path(conn, :index))
+      |> halt()
+    end
+  end
+
+        end
